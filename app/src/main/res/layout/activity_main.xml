@@ -6,16 +6,22 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TableLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp">
+        android:orientation="vertical"
+        android:paddingTop="10dp">
 
-        <TableRow
-            android:gravity="center">
+        <LinearLayout
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:orientation="horizontal">
 
-            <TextView android:text="@string/phone_label"></TextView>
+            <TextView
+                android:text="@string/phone_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"></TextView>
 
             <EditText
                 android:id="@+id/phoneNum"
@@ -23,40 +29,70 @@
                 android:layout_height="wrap_content"
                 android:ems="13"
                 android:inputType="phone"></EditText>
-        </TableRow>
+        </LinearLayout>
 
-        <TableRow
-            android:gravity="center">
+        <LinearLayout
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal">
 
-            <TextView android:text="@string/api_label"></TextView>
+            <TextView
+                android:text="@string/api_label"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"></TextView>
 
             <EditText
-                android:id="@+id/editTextPhone2"
+                android:id="@+id/apiUrl"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="13"
-                android:inputType="phone" />
-        </TableRow>
+                android:inputType="text" />
+        </LinearLayout>
 
-        <TableRow
-            android:gravity="center">
+        <LinearLayout
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal">
 
             <Button
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
                 android:id="@+id/saveConfig"
+                android:onClick="saveConfigClick"
                 android:text="@string/save_config_btn"></Button>
 
             <Button
-                android:id="@+id/startListen"
-                android:text="@string/start_listen_btn"></Button>
-        </TableRow>
-        <TableRow
-            android:gravity="center">
-            <TextView
-                android:text="@string/status_label"
-                android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
-                android:textColor="@color/colorRed"
-                android:id="@+id/serviceStatus"></TextView>
-        </TableRow>
-    </TableLayout>
+                android:layout_height="wrap_content"
+                android:id="@+id/testApi"
+                android:onClick="testApiClick"
+                android:text="@string/test_api_btn"></Button>
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:orientation="vertical">
+<!--            <Button-->
+<!--                android:id="@+id/startListen"-->
+<!--                android:onClick="startListenClick"-->
+<!--                android:text="@string/start_listen_btn"></Button>-->
+
+                <ScrollView
+                    android:id="@+id/scrollText"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="15dp">
+
+                    <TextView
+                        android:id="@+id/serviceStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/status_label"
+                        android:textColor="@color/colorRed"></TextView>
+                </ScrollView>
+            </LinearLayout>
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
