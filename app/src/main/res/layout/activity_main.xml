@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp">
+
+        <TableRow
+            android:gravity="center">
+
+            <TextView android:text="@string/phone_label"></TextView>
+
+            <EditText
+                android:id="@+id/phoneNum"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ems="13"
+                android:inputType="phone"></EditText>
+        </TableRow>
+
+        <TableRow
+            android:gravity="center">
+
+            <TextView android:text="@string/api_label"></TextView>
+
+            <EditText
+                android:id="@+id/editTextPhone2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ems="13"
+                android:inputType="phone" />
+        </TableRow>
+
+        <TableRow
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/saveConfig"
+                android:text="@string/save_config_btn"></Button>
+
+            <Button
+                android:id="@+id/startListen"
+                android:text="@string/start_listen_btn"></Button>
+        </TableRow>
+        <TableRow
+            android:gravity="center">
+            <TextView
+                android:text="@string/status_label"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:textColor="@color/colorRed"
+                android:id="@+id/serviceStatus"></TextView>
+        </TableRow>
+    </TableLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
