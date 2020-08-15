@@ -11,6 +11,8 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +30,10 @@ public class Tools {
     public static void SendMsg(String phone, String text, TextView textView, ScrollView scrollView) {
         SmsManager smsManager = SmsManager.getDefault();
         smsManager.sendTextMessage(phone, null, text,null,null);
-        textView.append("转发到手机号成功\n");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date(System.currentTimeMillis());
+        String now = simpleDateFormat.format(date);
+        textView.append("["+now+"] 转发到手机号成功\n");
         scrollView.fullScroll(ScrollView.FOCUS_DOWN);
     }
 

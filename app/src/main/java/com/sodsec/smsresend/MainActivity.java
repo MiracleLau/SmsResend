@@ -163,8 +163,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             OkHttpClient okHttpClient = new OkHttpClient();
             Gson gson = new Gson();
-            String json = gson.toJson(data);
-            Log.d("POST_JSON",json);
+            final String json = gson.toJson(data);
             RequestBody requestBody = RequestBody.create(json, JSON);
             Request request = new Request.Builder()
                     .url(url + "/saveMsg")
@@ -179,7 +178,9 @@ public class MainActivity extends AppCompatActivity {
                     mainHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            showToast(error);
+                            showToast("请求失败，"+error);
+                            showToast("将短信转发到指定的手机上");
+                            Tools.SendMsg(phone, json, statusLabel, scrollView);
                         }
                     });
                 }
@@ -187,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call call, final Response response) throws IOException {
                     Handler mainHandler = new Handler(Looper.getMainLooper());
-                    try{
+                    try {
                         if (response.isSuccessful()) {
                             Gson gson = new Gson();
                             final Result result = gson.fromJson(response.body().string(), Result.class);
@@ -206,6 +207,8 @@ public class MainActivity extends AppCompatActivity {
                                 @Override
                                 public void run() {
                                     showToast("请求接口失败,状态码：" + response.code());
+                                    showToast("将短信转发到指定的手机上");
+                                    Tools.SendMsg(phone, json, statusLabel, scrollView);
                                 }
                             });
                         }
@@ -214,7 +217,9 @@ public class MainActivity extends AppCompatActivity {
                         mainHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                showToast("发生错误："+error);
+                                showToast("发生错误：" + error);
+                                showToast("将短信转发到指定的手机上");
+                                Tools.SendMsg(phone, json, statusLabel, scrollView);
                             }
                         });
                     }
@@ -223,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         } catch (Exception e) {
-            showToast(e.getMessage());
+            showToast("发生错误："+e.getMessage());
         }
     }
 
@@ -234,9 +239,7 @@ public class MainActivity extends AppCompatActivity {
             this.activity = activity;
         }
         @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d("MainActivity","收到短信");
-            Bundle bundle = intent.getExtras();
+        public void onReceive(Context context, Intent intent) { Bundle bundle = intent.getExtras();
             Object[] pdus = (Object[]) bundle.get("pdus");
             SmsMessage[] msgs = new SmsMessage[pdus.length];
             String format1 = intent.getStringExtra("format");
