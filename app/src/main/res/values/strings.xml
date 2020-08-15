@@ -2,6 +2,7 @@
     <string name="app_name">SmsResend</string>
     <string name="phone_label">手机号:</string>
     <string name="api_label">接口地址:</string>
+    <string name="api_pwd_label">接口密码:</string>
     <string name="save_config_btn">保存配置</string>
     <string name="test_api_btn">测试接口</string>
     <string name="start_listen_btn">开始监听</string>
