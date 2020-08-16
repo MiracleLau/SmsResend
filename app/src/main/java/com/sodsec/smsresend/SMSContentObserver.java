@@ -18,17 +18,12 @@ import java.util.List;
 import java.util.Map;
 
 public class SMSContentObserver extends ContentObserver {
-    //所有短信
-    public static final String SMS_URI_ALL = "content://sms/";
     //收件箱短信
     public static final String SMS_URI_INBOX = "content://sms/inbox";
-    //发件箱短信
-    public static final String SMS_URI_SEND = "content://sms/sent";
-    //草稿箱短信
-    public static final String SMS_URI_DRAFT = "content://sms/draft";
     private Activity mActivity;
     private Map<String,String> smsMap;
     private MessageListener mMessageListener;
+    private int lastId;
 
     public SMSContentObserver(Handler handler, Activity activity) {
         super(handler);
@@ -36,10 +31,20 @@ public class SMSContentObserver extends ContentObserver {
     }
 
     @Override
-    public void onChange(boolean selfChange) {
+    public void onChange(boolean selfChange,Uri uri) {
         super.onChange(selfChange);
-        Uri uri = Uri.parse(SMS_URI_INBOX);
-        smsMap = this.getSmsInfo(uri,mActivity);
+        // 过滤掉raw和sms，以防止多次调用的问题
+        if(uri.toString().equals("content://sms/raw") || uri.toString().equals("content://sms")){
+            return;
+        }
+        if(uri.toString().substring(0,17).equals("content://sms/raw")) {
+            return;
+        }
+        Uri uriInbox = Uri.parse(SMS_URI_INBOX);
+        smsMap = this.getSmsInfo(uriInbox,mActivity);
+        if(smsMap == null){
+            return;
+        }
         mMessageListener.OnReceived(smsMap);
     }
 
@@ -49,17 +54,20 @@ public class SMSContentObserver extends ContentObserver {
      * 这条当然是最新收到的消息
      */
     private Map<String,String> getSmsInfo(Uri uri,Activity activity){
-        // String[] projection = new String[] { "_id", "address", "person","body", "date", "type" };
-        String[] projection = new String[] { "address", "date","body" };
+        String[] projection = new String[] { "_id","address", "date","body" };
         Cursor cusor = activity.getApplication().getContentResolver().query(uri, projection, null, null,"date desc limit 1");
-        // int nameColumn = cusor.getColumnIndex("person");
+        int idColumn = cusor.getColumnIndex("_id");
         int phoneNumberColumn = cusor.getColumnIndex("address");
         int smsbodyColumn = cusor.getColumnIndex("body");
-        // int dateColumn = cusor.getColumnIndex("date");
-        // int typeColumn = cusor.getColumnIndex("type");
         Map<String,String> msg = new HashMap<>();
         if (cusor != null) {
             while (cusor.moveToNext()) {
+                int id = cusor.getInt(idColumn);
+                Log.d("SMS_ID",id+","+lastId);
+                if (lastId == id) {
+                    return null;
+                }
+                lastId = id;
                 msg.put("mobile",cusor.getString(phoneNumberColumn));    //获取手机号
                 msg.put("content",cusor.getString(smsbodyColumn));
                 SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
