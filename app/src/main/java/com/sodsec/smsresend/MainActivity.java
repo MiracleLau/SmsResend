@@ -1,5 +1,6 @@
 package com.sodsec.smsresend;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -7,11 +8,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.telephony.SmsMessage;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ScrollView;
@@ -19,8 +20,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.gson.Gson;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -29,6 +34,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -76,7 +82,8 @@ public class MainActivity extends AppCompatActivity {
             filter.addAction(SMS_RECEIVED);
             broadcastReceiver = new SmsReceiver(MainActivity.this);
             registerReceiver(broadcastReceiver, filter);
-
+            // 获取权限
+            checkPermission();
             // 启动服务
 //            Intent intent = new Intent(this, ServiceUpdateUI.class);
 //            startService(intent);
@@ -158,10 +165,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 发送POST请求
-    public void post(String url, Map<String,String> data) {
+    public void post(String url, @NotNull Map<String,String> data) {
         MediaType JSON=MediaType.parse("application/json; charset=utf-8");
+        final Boolean isTest = data.containsKey("test");
+        String smsContent  = "";
+        if (data.containsKey("mobile") && data.containsKey("content")) {
+            smsContent = "发送：" + data.getOrDefault("mobile","") + "\n内容：" + data.getOrDefault("content","");
+        }
+        final String sendContent = smsContent;
         try {
-            OkHttpClient okHttpClient = new OkHttpClient();
+            OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                    .retryOnConnectionFailure(true)
+                    .readTimeout(5, TimeUnit.SECONDS)
+                    .connectTimeout(5,TimeUnit.SECONDS)
+                    .build();
             Gson gson = new Gson();
             final String json = gson.toJson(data);
             RequestBody requestBody = RequestBody.create(json, JSON);
@@ -179,8 +196,10 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             showToast("请求失败，"+error);
-                            showToast("将短信转发到指定的手机上");
-                            Tools.SendMsg(phone, json, statusLabel, scrollView);
+                            if(!isTest){
+                                showToast("将短信转发到指定的手机上");
+                                Tools.SendMsg(phone, sendContent, statusLabel, scrollView);
+                            }
                         }
                     });
                 }
@@ -207,8 +226,10 @@ public class MainActivity extends AppCompatActivity {
                                 @Override
                                 public void run() {
                                     showToast("请求接口失败,状态码：" + response.code());
-                                    showToast("将短信转发到指定的手机上");
-                                    Tools.SendMsg(phone, json, statusLabel, scrollView);
+                                    if(!isTest) {
+                                        showToast("将短信转发到指定的手机上");
+                                        Tools.SendMsg(phone, sendContent, statusLabel, scrollView);
+                                    }
                                 }
                             });
                         }
@@ -218,8 +239,10 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 showToast("发生错误：" + error);
-                                showToast("将短信转发到指定的手机上");
-                                Tools.SendMsg(phone, json, statusLabel, scrollView);
+                                if(!isTest) {
+                                    showToast("将短信转发到指定的手机上");
+                                    Tools.SendMsg(phone, sendContent, statusLabel, scrollView);
+                                }
                             }
                         });
                     }
@@ -240,6 +263,7 @@ public class MainActivity extends AppCompatActivity {
         }
         @Override
         public void onReceive(Context context, Intent intent) { Bundle bundle = intent.getExtras();
+        activity.showToast("接收到新消息，开始处理");
             Object[] pdus = (Object[]) bundle.get("pdus");
             SmsMessage[] msgs = new SmsMessage[pdus.length];
             String format1 = intent.getStringExtra("format");
@@ -268,4 +292,33 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(broadcastReceiver);
     }
 
+    // 获取权限
+    private void checkPermission() {
+        int canSendSms = ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.SEND_SMS);
+        int canReceiveSms = ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.RECEIVE_SMS);
+        int canReadSms = ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.READ_SMS);
+        String[] permissions = new String[]{Manifest.permission.READ_SMS, Manifest.permission.SEND_SMS, Manifest.permission.RECEIVE_SMS};
+        List<String> permissionList = new ArrayList<>();
+        for (int i = 0; i < permissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, permissions[i]) != PackageManager.PERMISSION_GRANTED) {
+                permissionList.add(permissions[i]);
+            }
+        }
+        if (!permissionList.isEmpty()) {
+            String[] permissionsArr = permissionList.toArray(new String[permissionList.size()]);
+            ActivityCompat.requestPermissions(this, permissionsArr, 1);
+        }
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        //通过requestCode来识别是否同一个请求
+        if (requestCode == 1){
+            if (grantResults.length < 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED){
+                showToast("请同意所有权限后才能正常使用本程序");
+                this.finish();
+            }
+        }
+    }
 }
