@@ -89,15 +89,18 @@
                 android:onClick="testApiClick"
                 android:text="@string/test_api_btn"></Button>
 
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/startListen"
+                android:onClick="startListenClick"
+                android:text="@string/start_listen_btn"></Button>
+
         </LinearLayout>
         <LinearLayout
             android:layout_height="match_parent"
             android:layout_width="match_parent"
             android:orientation="vertical">
-<!--            <Button-->
-<!--                android:id="@+id/startListen"-->
-<!--                android:onClick="startListenClick"-->
-<!--                android:text="@string/start_listen_btn"></Button>-->
 
                 <ScrollView
                     android:id="@+id/scrollText"
@@ -109,7 +112,6 @@
                         android:id="@+id/serviceStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/status_label"
                         android:textColor="@color/colorRed"></TextView>
                 </ScrollView>
             </LinearLayout>

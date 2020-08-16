@@ -10,12 +10,14 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class SMSContentObserver extends ContentObserver {
     //收件箱短信
@@ -28,16 +30,17 @@ public class SMSContentObserver extends ContentObserver {
     public SMSContentObserver(Handler handler, Activity activity) {
         super(handler);
         this.mActivity = activity;
+        lastId = -1;
     }
 
     @Override
     public void onChange(boolean selfChange,Uri uri) {
         super.onChange(selfChange);
         // 过滤掉raw和sms，以防止多次调用的问题
-        if(uri.toString().equals("content://sms/raw") || uri.toString().equals("content://sms")){
-            return;
-        }
-        if(uri.toString().substring(0,17).equals("content://sms/raw")) {
+        String uriStrt = uri.toString();
+        if(uriStrt.equals("content://sms/raw")
+                || uriStrt.equals("content://sms")
+                || uriStrt.indexOf("content://sms/raw") >= 0){
             return;
         }
         Uri uriInbox = Uri.parse(SMS_URI_INBOX);
@@ -59,6 +62,7 @@ public class SMSContentObserver extends ContentObserver {
         int idColumn = cusor.getColumnIndex("_id");
         int phoneNumberColumn = cusor.getColumnIndex("address");
         int smsbodyColumn = cusor.getColumnIndex("body");
+        int dateColumn = cusor.getColumnIndex("date");
         Map<String,String> msg = new HashMap<>();
         if (cusor != null) {
             while (cusor.moveToNext()) {
@@ -71,7 +75,13 @@ public class SMSContentObserver extends ContentObserver {
                 msg.put("mobile",cusor.getString(phoneNumberColumn));    //获取手机号
                 msg.put("content",cusor.getString(smsbodyColumn));
                 SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                Date date = new Date(System.currentTimeMillis());
+                String timeStr = cusor.getString(dateColumn);
+                Date date = null;
+                try {
+                    date = format.parse(timeStr);
+                } catch (ParseException e) {
+                    date = new Date(System.currentTimeMillis());
+                }
                 String time = format.format(date);
                 msg.put("time",time);
                 msg.put("type","0");  //固定为0，为以后的功能做准备，0为短信，1为来电
