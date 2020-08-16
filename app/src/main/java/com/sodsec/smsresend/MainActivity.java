@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -55,7 +56,8 @@ public class MainActivity extends AppCompatActivity {
     private String api;
     private String pwd;
     public static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
-    SmsReceiver broadcastReceiver;
+    public static final String URI = "content://sms";
+    private SMSContentObserver smsContentObserver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,15 +80,21 @@ public class MainActivity extends AppCompatActivity {
             phoneEdit.setText(phone);
             apiEdit.setText(api);
             pwdEdit.setText(pwd);
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(SMS_RECEIVED);
-            broadcastReceiver = new SmsReceiver(MainActivity.this);
-            registerReceiver(broadcastReceiver, filter);
+            smsContentObserver = new SMSContentObserver(new Handler(),this);
+            this.getContentResolver().registerContentObserver
+                    (Uri.parse(URI), true, smsContentObserver);
+
+            //回调
+            smsContentObserver.setOnReceivedMessageListener(new SMSContentObserver.MessageListener() {
+                @Override
+                public void OnReceived(Map<String,String> message) {
+                    message.put("pwd",pwd);
+                    showToast("接收到新消息，开始处理");
+                    post(api,message);
+                }
+            });
             // 获取权限
             checkPermission();
-            // 启动服务
-//            Intent intent = new Intent(this, ServiceUpdateUI.class);
-//            startService(intent);
         }catch (Exception ex){
             showToast(ex.getMessage());
         }
@@ -255,41 +263,42 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class SmsReceiver extends BroadcastReceiver {
-        private final MainActivity activity;
-
-        public SmsReceiver(MainActivity activity) {
-            this.activity = activity;
-        }
-        @Override
-        public void onReceive(Context context, Intent intent) { Bundle bundle = intent.getExtras();
-        activity.showToast("接收到新消息，开始处理");
-            Object[] pdus = (Object[]) bundle.get("pdus");
-            SmsMessage[] msgs = new SmsMessage[pdus.length];
-            String format1 = intent.getStringExtra("format");
-            for (int i = 0; i < pdus.length; i++) {
-                msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i],format1);
-            }
-            Map<String,String> msgMap = new HashMap<String,String>();
-            for (SmsMessage msg : msgs) {
-                msgMap.put("mobile",msg.getDisplayOriginatingAddress());
-                msgMap.put("content",msg.getDisplayMessageBody());
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                Date date = new Date(msg.getTimestampMillis());
-                String time = format.format(date);
-                msgMap.put("type","0");
-                msgMap.put("time",time);
-            }
-            msgMap.put("pwd",activity.pwd);
-            activity.post(activity.api,msgMap);
-        }
-    }
+//    public class SmsReceiver extends BroadcastReceiver {
+//        private final MainActivity activity;
+//
+//        public SmsReceiver(MainActivity activity) {
+//            this.activity = activity;
+//        }
+//        @Override
+//        public void onReceive(Context context, Intent intent) { Bundle bundle = intent.getExtras();
+//        activity.showToast("接收到新消息，开始处理");
+//            Object[] pdus = (Object[]) bundle.get("pdus");
+//            SmsMessage[] msgs = new SmsMessage[pdus.length];
+//            String format1 = intent.getStringExtra("format");
+//            for (int i = 0; i < pdus.length; i++) {
+//                msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i],format1);
+//            }
+//            Map<String,String> msgMap = new HashMap<String,String>();
+//            for (SmsMessage msg : msgs) {
+//                msgMap.put("mobile",msg.getDisplayOriginatingAddress());
+//                msgMap.put("content",msg.getDisplayMessageBody());
+//                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//                Date date = new Date(msg.getTimestampMillis());
+//                String time = format.format(date);
+//                msgMap.put("type","0");
+//                msgMap.put("time",time);
+//            }
+//            msgMap.put("pwd",activity.pwd);
+//            activity.post(activity.api,msgMap);
+//        }
+//    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         // 注销广播
-        unregisterReceiver(broadcastReceiver);
+        // unregisterReceiver(broadcastReceiver);
+        getContentResolver().unregisterContentObserver(smsContentObserver);
     }
 
     // 获取权限
